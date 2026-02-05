@@ -83,10 +83,4 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 4.  **Tailor**: Click the **Lightning Bolt** on any job to generate a custom resume version.
 5.  **Track**: Switch to **Board View** to manage your application lifecycle.
 
-## 🤝 Contributing
 
-Contributions are welcome! Please fork the repo and submit a PR.
-
-## 📄 License
-
-MIT License.
