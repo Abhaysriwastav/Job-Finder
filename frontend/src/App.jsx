@@ -45,6 +45,7 @@ function App() {
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('Germany');
+  const [dateFilter, setDateFilter] = useState(72); // Default 3 days
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -173,7 +174,9 @@ function App() {
         location: job.location,
         description: job.description,
         url: job.url,
+        url: job.url,
         date_saved: new Date().toISOString().split('T')[0],
+        date_posted: job.date_posted,
         status: "Saved"
       };
 
@@ -301,7 +304,7 @@ function App() {
     setTailoredResults({}); // Clear old results
     try {
       const res = await axios.get(`${API_URL}/search-jobs/`, {
-        params: { query: queryToUse, location }
+        params: { query: queryToUse, location, hours_old: dateFilter || 720 }
       });
       setJobs(res.data);
     } catch (err) {
@@ -510,6 +513,18 @@ function App() {
                   <Button type="submit" loading={loading} className="py-1 px-4 h-auto text-sm bg-blue-600 hover:bg-blue-700 rounded-md shadow-none">Search</Button>
                 </form>
 
+                {/* Date Filter */}
+                <select
+                  value={dateFilter || ""}
+                  onChange={(e) => setDateFilter(e.target.value ? Number(e.target.value) : null)}
+                  className="px-3 py-2 bg-white border border-gray-200 text-gray-600 text-sm rounded-lg outline-none focus:border-blue-300 shadow-sm"
+                >
+                  <option value="24">Past 24 Hours</option>
+                  <option value="72">Past 3 Days</option>
+                  <option value="168">Past Week</option>
+                  <option value="">Any Time</option>
+                </select>
+
                 {/* Save Search Button */}
                 <button
                   onClick={handleSaveSearch}
@@ -646,7 +661,7 @@ function App() {
                           )}
                         </div>
 
-                        <div className="col-span-1 text-xs text-gray-500">Today</div>
+                        <div className="col-span-1 text-xs text-gray-500">{job.date_posted || "Recently"}</div>
 
                         <div className="col-span-2">
                           {isProcessing ? (
@@ -869,7 +884,7 @@ function App() {
 
                         <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
                           <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> 2d ago
+                            <Clock className="w-3 h-3" /> {job.date_posted ? job.date_posted : "Recently"}
                           </span>
 
                           {/* Status Mover Buttons */}
@@ -973,14 +988,18 @@ function App() {
 
                     if (Array.isArray(parsedData.Tailored_Experience)) {
                       parsedData.Tailored_Experience.forEach(exp => {
-                        plainText += `${exp.Job_Title} | ${exp.Company}\n`;
-                        plainText += `${exp.Duration}\n`;
-                        if (exp.Responsibilities) {
-                          exp.Responsibilities.forEach(r => plainText += `- ${r}\n`);
+                        if (typeof exp === 'string') {
+                          plainText += `- ${exp}\n`;
+                        } else {
+                          plainText += `${exp.Job_Title || 'Role'} | ${exp.Company || 'Company'}\n`;
+                          plainText += `${exp.Duration || ''}\n`;
+                          if (exp.Responsibilities && Array.isArray(exp.Responsibilities)) {
+                            exp.Responsibilities.forEach(r => plainText += `- ${r}\n`);
+                          }
+                          plainText += `\n`;
                         }
-                        plainText += `\n`;
                       });
-                    } else {
+                    } else if (typeof parsedData.Tailored_Experience === 'string') {
                       plainText += parsedData.Tailored_Experience;
                     }
 

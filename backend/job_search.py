@@ -5,12 +5,12 @@ from jobspy import scrape_jobs
 
 logger = logging.getLogger(__name__)
 
-def search_jobs_in_germany(query: str, location: str = "Germany") -> List[Dict[str, str]]:
+def search_jobs_in_germany(query: str, location: str = "Germany", hours_old: int = 72) -> List[Dict[str, str]]:
     """
     Searches for jobs in Germany using python-jobspy.
     Scrapes Indeed, LinkedIn, and Glassdoor.
     """
-    logger.info(f"Scraping jobs for {query} in {location}...")
+    logger.info(f"Scraping jobs for {query} in {location} (last {hours_old}h)...")
     
     try:
         # Scrape jobs from multiple sites
@@ -19,9 +19,10 @@ def search_jobs_in_germany(query: str, location: str = "Germany") -> List[Dict[s
             search_term=query,
             location=location,
             results_wanted=10,
-            hours_old=72,
+            hours_old=hours_old,
             country_indeed='Germany'
         )
+        
         
         # Pydantic doesn't like NaN, so fill them with empty strings
         jobs_df = jobs_df.fillna("")
@@ -41,7 +42,8 @@ def search_jobs_in_germany(query: str, location: str = "Germany") -> List[Dict[s
                 "location": row.get('location') or location,
                 # Description might be truncated or missing in some scrapes, handle gracefully
                 "description": row.get('description') or f"View full details at {row.get('job_url')}",
-                "url": row.get('job_url') or "#"
+                "url": row.get('job_url') or "#",
+                "date_posted": str(row.get('date_posted')) if row.get('date_posted') else None
             })
             
         logger.info(f"Found {len(results)} jobs.")
@@ -58,7 +60,9 @@ def get_mock_jobs(query, location):
             "title": f"Senior {query} (Mock/Fallback)",
             "company": "Tech Corp GmbH",
             "location": location,
+            "location": location,
             "description": "Scraping failed or was blocked. This is a fallback result. Real scraping can be brittle.",
-            "url": "https://example.com"
+            "url": "https://example.com",
+            "date_posted": "2023-01-01"
         }
     ]

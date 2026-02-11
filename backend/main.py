@@ -30,6 +30,7 @@ class Job(BaseModel):
     location: str
     description: str
     url: Optional[str] = None
+    date_posted: Optional[str] = None
 
 class TailorRequest(BaseModel):
     resume_text: str
@@ -116,6 +117,7 @@ class TrackedJob(BaseModel):
     url: Optional[str] = None
     status: str = "Saved" # Saved, Drafting, Applied, Interview, Offer, Rejected
     date_saved: str
+    date_posted: Optional[str] = None
     notes: Optional[str] = ""
     match_score: Optional[int] = 0
 
@@ -166,9 +168,9 @@ def delete_tracked_job(job_id: str):
     return {"message": "Job removed"}
 
 @app.get("/search-jobs/", response_model=List[Job])
-def search_jobs(query: str, location: str = "Germany"):
+def search_jobs(query: str, location: str = "Germany", hours_old: int = 72):
     try:
-        jobs = search_jobs_in_germany(query, location)
+        jobs = search_jobs_in_germany(query, location, hours_old)
         return jobs
     except Exception as e:
         logger.error(f"Error searching jobs: {str(e)}")

@@ -36,7 +36,14 @@ def tailor_resume(resume_text: str, job_description: str) -> str:
         {{
             "Match_Score": 85, 
             "Tailored_Summary": "Reshaped summary identifying key overlaps...",
-            "Tailored_Experience": "Refined bullet points..."
+            "Tailored_Experience": [
+                {{
+                    "Job_Title": "Senior Developer",
+                    "Company": "Tech Corp",
+                    "Duration": "2020 - Present",
+                    "Responsibilities": ["Refactored code...", "Led team..."]
+                }}
+            ]
         }}
         
         Original Resume:
