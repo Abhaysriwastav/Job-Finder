@@ -6,9 +6,11 @@
 
 ## ✨ Features
 
-- **🔎 Real-Time Job Scraping**: Aggregates live listings from **Indeed, LinkedIn, and Glassdoor** (using `jobspy`).
+- **🔎 Real-Time Job Scraping**: Aggregates live listings from **Indeed, LinkedIn, Glassdoor, VisaSponsor, and EURES (European Job Days)**.
+- **📅 Date Filter**: Easily filter job listings by posting date (e.g., Past 24 Hours, Past 3 Days).
+- **🤖 Auto-Apply Assistant**: Experimental browser automation to help you apply to jobs faster on external sites.
 - **🤖 AI Resume Tailoring**: Instantly rewrites your *Summary* and *Experience* sections to match a specific job description using **Mistral** (via Ollama).
-- **📋 Kanban Board Tracking**: meaningful drag-and-drop workflow (`Saved` → `Applied` → `Interview` → `Offer`).
+- **📋 Kanban Board Tracking**: Meaningful drag-and-drop workflow (`Saved` → `Applied` → `Interview` → `Offer`).
 - **⚡ Automated Monitoring**: "Set and Forget" saved searches that run in the background and auto-populate your board.
 - **📊 Analytics Dashboard**: Visualize your conversion rates and identify bottlenecks in your funnel.
 - **✉️ Cold Email Generator**: AI-assisted writing for reaching out to hiring managers directly.
