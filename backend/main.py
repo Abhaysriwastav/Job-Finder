@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -8,6 +8,7 @@ import logging
 from resume_parser import parse_resume
 from job_search import search_jobs_in_germany
 from tailor import tailor_resume
+from apply_bot import apply_to_linkedin
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -296,6 +297,34 @@ def run_automated_search():
             unique_results.append(job)
             
     return unique_results
+
+class ApplyRequest(BaseModel):
+    job_url: str
+    platform: str = "LinkedIn"
+
+@app.post("/apply-job/")
+def apply_job(request: ApplyRequest, background_tasks: BackgroundTasks):
+    try:
+        # Run the browser bot in the background so API doesn't block
+        background_tasks.add_task(apply_to_linkedin, request.job_url)
+        return {"message": "Auto-Apply Assistant started. Check the browser window."}
+    except Exception as e:
+        logger.error(f"Error starting apply bot: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ApplyRequest(BaseModel):
+    job_url: str
+    platform: str = "LinkedIn"
+
+@app.post("/apply-job/")
+def apply_job(request: ApplyRequest, background_tasks: BackgroundTasks):
+    try:
+        # Run the browser bot in the background so API doesn't block
+        background_tasks.add_task(apply_to_linkedin, request.job_url)
+        return {"message": "Auto-Apply Assistant started. Check the browser window."}
+    except Exception as e:
+        logger.error(f"Error starting apply bot: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, Search, FileText, CheckCircle, AlertCircle, Copy, ExternalLink, Zap, Clock, MapPin, Briefcase, ChevronDown, MoreHorizontal, Trash2, Mail, Mic, PieChart, BarChart, Bookmark } from 'lucide-react';
+import { Upload, Search, FileText, CheckCircle, AlertCircle, Copy, ExternalLink, Zap, Clock, MapPin, Briefcase, ChevronDown, MoreHorizontal, Trash2, Mail, Mic, PieChart, BarChart, Bookmark, Bot } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from './components/Button';
 
@@ -260,6 +260,27 @@ function App() {
       setError("Failed to generate interview prep.");
     } finally {
       setGeneratingPrep(false);
+    }
+  };
+
+  const handleAutoApply = async (job) => {
+    if (!job.url) {
+      alert("No URL found for this job.");
+      return;
+    }
+    try {
+      // Show a temporary toast or notification
+      const confirmApply = window.confirm(`Launch Auto-Apply Assistant for ${job.title}?\n\nThis will open a browser window on your computer.`);
+      if (!confirmApply) return;
+
+      await axios.post(`${API_URL}/apply-job/`, {
+        job_url: job.url,
+        platform: "LinkedIn"
+      });
+      alert("Assistant Launched! Look for the Chrome window.");
+    } catch (err) {
+      console.error("Error launching apply bot:", err);
+      alert("Failed to launch assistant.");
     }
   };
 
@@ -866,6 +887,16 @@ function App() {
                               title="Write Cold Email"
                             >
                               <Mail className="w-4 h-4" />
+                            </button>
+
+                            {/* Auto Apply Button */}
+                            <button
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => { e.stopPropagation(); handleAutoApply(job); }}
+                              className="text-gray-300 hover:text-green-500 hover:bg-green-50 p-0.5 rounded transition-colors"
+                              title="Auto Apply Assistant"
+                            >
+                              <Bot className="w-4 h-4" />
                             </button>
                             <button
                               onMouseDown={(e) => e.stopPropagation()}
