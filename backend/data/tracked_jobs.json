@@ -180,5 +180,18 @@
     "date_posted": "2026-02-11",
     "notes": "",
     "match_score": 0
+  },
+  {
+    "id": "PythonDeveloper_RJCGroup",
+    "title": "Python Developer",
+    "company": "RJC Group",
+    "location": "North Rhine-Westphalia, Germany",
+    "description": "View full details at https://www.linkedin.com/jobs/view/4371298121",
+    "url": "https://www.linkedin.com/jobs/view/4371298121",
+    "status": "Drafting",
+    "date_saved": "2026-02-11",
+    "date_posted": null,
+    "notes": "",
+    "match_score": 0
   }
 ]
