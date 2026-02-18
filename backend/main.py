@@ -1,4 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse
+import csv
+import io
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -288,8 +291,6 @@ def run_automated_search():
             logger.error(f"Failed to scrape for {search['query']}: {e}")
             
     # Deduplicate by URL or Title+Company
-    unique_results = []
-    seen = set()
     for job in all_results:
         key = job['title'] + job['company']
         if key not in seen:
@@ -298,18 +299,46 @@ def run_automated_search():
             
     return unique_results
 
-class ApplyRequest(BaseModel):
-    job_url: str
-    platform: str = "LinkedIn"
-
-@app.post("/apply-job/")
-def apply_job(request: ApplyRequest, background_tasks: BackgroundTasks):
+@app.post("/export-jobs-csv/")
+def export_jobs_csv(jobs: List[Job]):
+    """
+    Generates a CSV file from the list of jobs and returns it as a download.
+    """
     try:
-        # Run the browser bot in the background so API doesn't block
-        background_tasks.add_task(apply_to_linkedin, request.job_url)
-        return {"message": "Auto-Apply Assistant started. Check the browser window."}
+        if not jobs:
+            raise HTTPException(status_code=400, detail="No jobs provided to export.")
+
+        # Create an in-memory string buffer
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write Header
+        writer.writerow(["Title", "Company", "Location", "Description", "URL", "Date Posted"])
+
+        # Write Data
+        for job in jobs:
+            writer.writerow([
+                job.title,
+                job.company,
+                job.location,
+                job.description[:500], # Truncate description for CSV readability
+                job.url,
+                job.date_posted
+            ])
+
+        # Reset pointer to start
+        output.seek(0)
+        
+        # Return as a StreamingResponse
+        response = StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv"
+        )
+        response.headers["Content-Disposition"] = "attachment; filename=jobs_export.csv"
+        return response
+
     except Exception as e:
-        logger.error(f"Error starting apply bot: {str(e)}")
+        logger.error(f"Error exporting CSV: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class ApplyRequest(BaseModel):
@@ -325,6 +354,8 @@ def apply_job(request: ApplyRequest, background_tasks: BackgroundTasks):
     except Exception as e:
         logger.error(f"Error starting apply bot: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 if __name__ == "__main__":
     import uvicorn

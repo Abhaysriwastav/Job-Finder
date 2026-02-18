@@ -2,8 +2,8 @@ import logging
 import csv
 from typing import List, Dict
 from jobspy import scrape_jobs
-from .scrapers.visasponsor import scrape_visasponsor
-from .scrapers.europeanjobdays import scrape_europeanjobdays
+from scrapers.visasponsor import scrape_visasponsor
+from scrapers.europeanjobdays import scrape_europeanjobdays
 
 logger = logging.getLogger(__name__)
 

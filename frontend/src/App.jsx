@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, Search, FileText, CheckCircle, AlertCircle, Copy, ExternalLink, Zap, Clock, MapPin, Briefcase, ChevronDown, MoreHorizontal, Trash2, Mail, Mic, PieChart, BarChart, Bookmark, Bot } from 'lucide-react';
+import { Upload, Search, FileText, CheckCircle, AlertCircle, Copy, ExternalLink, Zap, Clock, MapPin, Briefcase, ChevronDown, MoreHorizontal, Trash2, Mail, Mic, PieChart, BarChart, Bookmark, Bot, Download } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from './components/Button';
 import FloatingParticles from './components/FloatingParticles';
@@ -163,6 +163,31 @@ function App() {
       setError("Automated search failed. Check backend logs.");
     } finally {
       setIsAutomatedSearchRunning(false);
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    if (!jobs || jobs.length === 0) {
+      alert("No jobs to download.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(`${API_URL}/export-jobs-csv/`, jobs, {
+        responseType: 'blob', // Important for file download
+      });
+
+      // Create a blob link to download
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'jobs_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("Download failed", err);
+      setError("Failed to download CSV.");
     }
   };
 
@@ -601,6 +626,15 @@ function App() {
                     <Bookmark className="w-5 h-5" />
                   </button>
 
+                  {/* Download CSV Button */}
+                  <button
+                    onClick={handleDownloadCSV}
+                    className="h-[42px] px-4 text-sm font-medium rounded-lg transition-all shadow-xl flex items-center gap-2 whitespace-nowrap bg-gray-800 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                    title="Download jobs as CSV"
+                  >
+                    <Download className="w-4 h-4" /> Download CSV
+                  </button>
+
                   {/* Manage Searches Toggle */}
                   <button
                     onClick={() => setShowSavedSearches(!showSavedSearches)}
@@ -783,8 +817,8 @@ function App() {
                             onClick={() => !isTracked && handleTrackJob(job)}
                             disabled={isTracked}
                             className={`p-1.5 rounded transition-colors ${isTracked
-                                ? 'text-green-400 bg-green-500/10 cursor-default'
-                                : 'text-gray-500 hover:text-green-400 hover:bg-green-500/10'
+                              ? 'text-green-400 bg-green-500/10 cursor-default'
+                              : 'text-gray-500 hover:text-green-400 hover:bg-green-500/10'
                               }`}
                             title={isTracked ? "Saved" : "Save to Board"}
                           >
@@ -1013,299 +1047,305 @@ function App() {
       </main>
 
       {/* Tailored Result Modal */}
-      {activeModalData && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 backdrop-blur-sm">
-          <div className="bg-gray-900 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 border border-white/10 font-sans">
+      {
+        activeModalData && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 backdrop-blur-sm">
+            <div className="bg-gray-900 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 border border-white/10 font-sans">
 
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-black/20">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${activeModalData?.parsed?.Match_Score >= 70 ? 'bg-green-500' : 'bg-orange-500'}`} />
-                  <h2 className="font-semibold text-white">Optimization Report</h2>
-                </div>
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-black/20">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${activeModalData?.parsed?.Match_Score >= 70 ? 'bg-green-500' : 'bg-orange-500'}`} />
+                    <h2 className="font-semibold text-white">Optimization Report</h2>
+                  </div>
 
-                {/* View Mode Toggle */}
-                <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10">
-                  <button
-                    onClick={() => setModalMode('visual')}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${modalMode === 'visual' ? 'bg-white/10 shadow-sm text-white' : 'text-gray-400 hover:text-gray-200'}`}
-                  >
-                    Visual
-                  </button>
-                  <button
-                    onClick={() => setModalMode('text')}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${modalMode === 'text' ? 'bg-white/10 shadow-sm text-white' : 'text-gray-400 hover:text-gray-200'}`}
-                  >
-                    Text
-                  </button>
+                  {/* View Mode Toggle */}
+                  <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10">
+                    <button
+                      onClick={() => setModalMode('visual')}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${modalMode === 'visual' ? 'bg-white/10 shadow-sm text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                    >
+                      Visual
+                    </button>
+                    <button
+                      onClick={() => setModalMode('text')}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${modalMode === 'text' ? 'bg-white/10 shadow-sm text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                    >
+                      Text
+                    </button>
+                  </div>
                 </div>
+                <button onClick={() => setActiveModalData(null)} className="text-gray-400 hover:text-white transition-colors">
+                  <ChevronDown className="w-6 h-6 rotate-180" />
+                </button>
               </div>
-              <button onClick={() => setActiveModalData(null)} className="text-gray-400 hover:text-white transition-colors">
-                <ChevronDown className="w-6 h-6 rotate-180" />
-              </button>
-            </div>
 
-            <div className="flex-1 overflow-auto p-8 bg-gray-900 text-gray-100 custom-scrollbar">
-              <ErrorBoundary>
-                {(() => {
-                  const parsedData = activeModalData.parsed;
+              <div className="flex-1 overflow-auto p-8 bg-gray-900 text-gray-100 custom-scrollbar">
+                <ErrorBoundary>
+                  {(() => {
+                    const parsedData = activeModalData.parsed;
 
-                  // Fallback: Render Raw content safely
-                  if (!parsedData) {
-                    let rawContent = activeModalData.raw;
-                    if (typeof rawContent === 'object') {
-                      rawContent = JSON.stringify(rawContent, null, 2);
+                    // Fallback: Render Raw content safely
+                    if (!parsedData) {
+                      let rawContent = activeModalData.raw;
+                      if (typeof rawContent === 'object') {
+                        rawContent = JSON.stringify(rawContent, null, 2);
+                      }
+                      return <pre className="text-xs whitespace-pre-wrap font-mono p-4 bg-black/40 rounded border border-white/10 text-gray-300">{rawContent}</pre>;
                     }
-                    return <pre className="text-xs whitespace-pre-wrap font-mono p-4 bg-black/40 rounded border border-white/10 text-gray-300">{rawContent}</pre>;
-                  }
 
-                  // TEXT MODE RENDERER
-                  if (modalMode === 'text') {
-                    // Construct plain text representation
-                    let plainText = `PROFESSIONAL SUMMARY\n\n${parsedData.Tailored_Summary}\n\n`;
-                    plainText += `EXPERIENCE\n\n`;
+                    // TEXT MODE RENDERER
+                    if (modalMode === 'text') {
+                      // Construct plain text representation
+                      let plainText = `PROFESSIONAL SUMMARY\n\n${parsedData.Tailored_Summary}\n\n`;
+                      plainText += `EXPERIENCE\n\n`;
 
-                    if (Array.isArray(parsedData.Tailored_Experience)) {
-                      parsedData.Tailored_Experience.forEach(exp => {
-                        if (typeof exp === 'string') {
-                          plainText += `- ${exp}\n`;
-                        } else {
-                          plainText += `${exp.Job_Title || 'Role'} | ${exp.Company || 'Company'}\n`;
-                          plainText += `${exp.Duration || ''}\n`;
-                          if (exp.Responsibilities && Array.isArray(exp.Responsibilities)) {
-                            exp.Responsibilities.forEach(r => plainText += `- ${r}\n`);
+                      if (Array.isArray(parsedData.Tailored_Experience)) {
+                        parsedData.Tailored_Experience.forEach(exp => {
+                          if (typeof exp === 'string') {
+                            plainText += `- ${exp}\n`;
+                          } else {
+                            plainText += `${exp.Job_Title || 'Role'} | ${exp.Company || 'Company'}\n`;
+                            plainText += `${exp.Duration || ''}\n`;
+                            if (exp.Responsibilities && Array.isArray(exp.Responsibilities)) {
+                              exp.Responsibilities.forEach(r => plainText += `- ${r}\n`);
+                            }
+                            plainText += `\n`;
                           }
-                          plainText += `\n`;
-                        }
-                      });
-                    } else if (typeof parsedData.Tailored_Experience === 'string') {
-                      plainText += parsedData.Tailored_Experience;
+                        });
+                      } else if (typeof parsedData.Tailored_Experience === 'string') {
+                        plainText += parsedData.Tailored_Experience;
+                      }
+
+                      return (
+                        <div className="h-full flex flex-col">
+                          <p className="text-sm text-gray-400 mb-2">Copy this text directly into your Enhancv resume.</p>
+                          <textarea
+                            className="flex-1 w-full p-4 bg-black/40 border border-white/10 rounded-lg text-sm font-mono leading-relaxed focus:ring-2 focus:ring-blue-500/50 outline-none resize-none text-gray-300"
+                            value={plainText}
+                            readOnly
+                          />
+                        </div>
+                      );
                     }
 
+                    // VISUAL MODE RENDERER
                     return (
-                      <div className="h-full flex flex-col">
-                        <p className="text-sm text-gray-400 mb-2">Copy this text directly into your Enhancv resume.</p>
-                        <textarea
-                          className="flex-1 w-full p-4 bg-black/40 border border-white/10 rounded-lg text-sm font-mono leading-relaxed focus:ring-2 focus:ring-blue-500/50 outline-none resize-none text-gray-300"
-                          value={plainText}
-                          readOnly
-                        />
-                      </div>
-                    );
-                  }
-
-                  // VISUAL MODE RENDERER
-                  return (
-                    <div className="space-y-8">
-                      {/* Score Header */}
-                      <div className="bg-white/5 p-6 rounded-xl border border-white/10 flex items-center gap-6">
-                        <div className="text-5xl font-bold tracking-tighter text-blue-500">
-                          {parsedData.Match_Score}%
-                        </div>
-                        <div className="flex-1 border-l border-white/10 pl-6">
-                          <h3 className="font-semibold text-white mb-1">Match Analysis</h3>
-                          <p className="text-sm text-gray-400 leading-relaxed">
-                            Your tailored profile strongly aligns with the job requirements. Use the sections below to update your specialized resume.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Content Sections */}
-                      <div className="grid gap-6">
-                        <div className="group relative border border-white/10 bg-white/5 rounded-lg p-5 hover:border-blue-500/50 transition-colors">
-                          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="outline" className="h-8 text-xs gap-1 bg-black/50 border-white/20 text-gray-300 hover:bg-white/10" onClick={() => copyToClipboard(parsedData.Tailored_Summary)}>
-                              <Copy className="w-3 h-3" /> Copy
-                            </Button>
+                      <div className="space-y-8">
+                        {/* Score Header */}
+                        <div className="bg-white/5 p-6 rounded-xl border border-white/10 flex items-center gap-6">
+                          <div className="text-5xl font-bold tracking-tighter text-blue-500">
+                            {parsedData.Match_Score}%
                           </div>
-                          <h4 className="text-sm font-bold text-gray-100 uppercase tracking-widest mb-3 text-blue-400">Professional Summary</h4>
-                          <p className="text-sm leading-relaxed text-gray-300">{parsedData.Tailored_Summary}</p>
+                          <div className="flex-1 border-l border-white/10 pl-6">
+                            <h3 className="font-semibold text-white mb-1">Match Analysis</h3>
+                            <p className="text-sm text-gray-400 leading-relaxed">
+                              Your tailored profile strongly aligns with the job requirements. Use the sections below to update your specialized resume.
+                            </p>
+                          </div>
                         </div>
 
-                        {parsedData.Tailored_Experience && (
+                        {/* Content Sections */}
+                        <div className="grid gap-6">
                           <div className="group relative border border-white/10 bg-white/5 rounded-lg p-5 hover:border-blue-500/50 transition-colors">
                             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="outline"
-                                className="h-8 text-xs gap-1 bg-black/50 border-white/20 text-gray-300 hover:bg-white/10"
-                                onClick={() => copyToClipboard(
-                                  typeof parsedData.Tailored_Experience === 'string'
-                                    ? parsedData.Tailored_Experience
-                                    : JSON.stringify(parsedData.Tailored_Experience, null, 2)
-                                )}
-                              >
+                              <Button variant="outline" className="h-8 text-xs gap-1 bg-black/50 border-white/20 text-gray-300 hover:bg-white/10" onClick={() => copyToClipboard(parsedData.Tailored_Summary)}>
                                 <Copy className="w-3 h-3" /> Copy
                               </Button>
                             </div>
-                            <h4 className="text-sm font-bold text-gray-100 uppercase tracking-widest mb-3 text-blue-400">Optimized Experience</h4>
-
-                            {Array.isArray(parsedData.Tailored_Experience) ? (
-                              <div className="space-y-6">
-                                {parsedData.Tailored_Experience.map((exp, idx) => (
-                                  <div key={idx} className="border-l-2 border-white/10 pl-4 py-1">
-                                    <h5 className="font-semibold text-gray-200">{exp.Job_Title}</h5>
-                                    <div className="text-xs text-gray-500 mb-2">{exp.Company} • {exp.Duration}</div>
-                                    <ul className="list-disc list-outside ml-4 space-y-1">
-                                      {exp.Responsibilities?.map((resp, rIdx) => (
-                                        <li key={rIdx} className="text-sm text-gray-400 leading-relaxed pl-1">{resp}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="prose prose-sm text-gray-300 max-w-none whitespace-pre-wrap font-regular">
-                                {parsedData.Tailored_Experience}
-                              </div>
-                            )}
+                            <h4 className="text-sm font-bold text-gray-100 uppercase tracking-widest mb-3 text-blue-400">Professional Summary</h4>
+                            <p className="text-sm leading-relaxed text-gray-300">{parsedData.Tailored_Summary}</p>
                           </div>
-                        )}
+
+                          {parsedData.Tailored_Experience && (
+                            <div className="group relative border border-white/10 bg-white/5 rounded-lg p-5 hover:border-blue-500/50 transition-colors">
+                              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="outline"
+                                  className="h-8 text-xs gap-1 bg-black/50 border-white/20 text-gray-300 hover:bg-white/10"
+                                  onClick={() => copyToClipboard(
+                                    typeof parsedData.Tailored_Experience === 'string'
+                                      ? parsedData.Tailored_Experience
+                                      : JSON.stringify(parsedData.Tailored_Experience, null, 2)
+                                  )}
+                                >
+                                  <Copy className="w-3 h-3" /> Copy
+                                </Button>
+                              </div>
+                              <h4 className="text-sm font-bold text-gray-100 uppercase tracking-widest mb-3 text-blue-400">Optimized Experience</h4>
+
+                              {Array.isArray(parsedData.Tailored_Experience) ? (
+                                <div className="space-y-6">
+                                  {parsedData.Tailored_Experience.map((exp, idx) => (
+                                    <div key={idx} className="border-l-2 border-white/10 pl-4 py-1">
+                                      <h5 className="font-semibold text-gray-200">{exp.Job_Title}</h5>
+                                      <div className="text-xs text-gray-500 mb-2">{exp.Company} • {exp.Duration}</div>
+                                      <ul className="list-disc list-outside ml-4 space-y-1">
+                                        {exp.Responsibilities?.map((resp, rIdx) => (
+                                          <li key={rIdx} className="text-sm text-gray-400 leading-relaxed pl-1">{resp}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="prose prose-sm text-gray-300 max-w-none whitespace-pre-wrap font-regular">
+                                  {parsedData.Tailored_Experience}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-              </ErrorBoundary>
-            </div>
-
-            <div className="p-4 border-t border-white/10 bg-black/20 flex justify-end gap-3">
-              <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-gray-300 border-white/10" onClick={() => setActiveModalData(null)}>Close</Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => copyToClipboard(activeModalData.raw)}>Copy JSON</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cold Email Modal */}
-      {emailModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-gray-900 rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 border border-white/10">
-            <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-black/20">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <Mail className="w-5 h-5 text-blue-500" />
-                Cold Email Generator
-              </h3>
-              <button onClick={() => setEmailModalOpen(false)} className="text-gray-400 hover:text-white"><ChevronDown className="w-6 h-6 rotate-180" /></button>
-            </div>
-
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Hiring Manager (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Jane Doe"
-                    className="w-full p-2 border border-white/10 bg-black/40 rounded-md text-sm outline-none focus:border-blue-500/50 text-gray-200 placeholder-gray-600"
-                    value={hiringManager}
-                    onChange={(e) => setHiringManager(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Platform</label>
-                  <select
-                    className="w-full p-2 border border-white/10 bg-black/40 rounded-md text-sm outline-none focus:border-blue-500/50 text-gray-200"
-                    value={emailPlatform}
-                    onChange={(e) => setEmailPlatform(e.target.value)}
-                  >
-                    <option value="Email" className="bg-gray-900">Email (Concise)</option>
-                    <option value="LinkedIn" className="bg-gray-900">LinkedIn Note (300 chars)</option>
-                    <option value="Cover Letter" className="bg-gray-900">Formal Cover Letter (Full Page)</option>
-                  </select>
-                </div>
+                    );
+                  })()}
+                </ErrorBoundary>
               </div>
 
-              {!generatedEmail ? (
-                <div className="text-center py-8">
-                  <Button onClick={handleGenerateEmail} loading={generatingEmail} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md border-0">
-                    <Zap className="w-4 h-4 mr-2" /> Generate Magic Draft
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">Uses AI to match your resume achievements to the job description.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-gray-300">Draft Content</h4>
-                  <textarea
-                    className="w-full h-48 p-4 bg-black/40 border border-white/10 rounded-lg text-sm font-mono leading-relaxed outline-none focus:ring-2 focus:ring-blue-500/50 resize-none text-gray-300"
-                    value={generatedEmail}
-                    onChange={(e) => setGeneratedEmail(e.target.value)}
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-gray-300 border-white/10" onClick={() => setGeneratedEmail("")}>Regenerate</Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => copyToClipboard(generatedEmail)}>
-                      <Copy className="w-4 h-4 mr-2" /> Copy to Clipboard
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="p-4 border-t border-white/10 bg-black/20 flex justify-end gap-3">
+                <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-gray-300 border-white/10" onClick={() => setActiveModalData(null)}>Close</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => copyToClipboard(activeModalData.raw)}>Copy JSON</Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* Cold Email Modal */}
+      {
+        emailModalOpen && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-gray-900 rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 border border-white/10">
+              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-black/20">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-blue-500" />
+                  Cold Email Generator
+                </h3>
+                <button onClick={() => setEmailModalOpen(false)} className="text-gray-400 hover:text-white"><ChevronDown className="w-6 h-6 rotate-180" /></button>
+              </div>
+
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Hiring Manager (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Jane Doe"
+                      className="w-full p-2 border border-white/10 bg-black/40 rounded-md text-sm outline-none focus:border-blue-500/50 text-gray-200 placeholder-gray-600"
+                      value={hiringManager}
+                      onChange={(e) => setHiringManager(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Platform</label>
+                    <select
+                      className="w-full p-2 border border-white/10 bg-black/40 rounded-md text-sm outline-none focus:border-blue-500/50 text-gray-200"
+                      value={emailPlatform}
+                      onChange={(e) => setEmailPlatform(e.target.value)}
+                    >
+                      <option value="Email" className="bg-gray-900">Email (Concise)</option>
+                      <option value="LinkedIn" className="bg-gray-900">LinkedIn Note (300 chars)</option>
+                      <option value="Cover Letter" className="bg-gray-900">Formal Cover Letter (Full Page)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {!generatedEmail ? (
+                  <div className="text-center py-8">
+                    <Button onClick={handleGenerateEmail} loading={generatingEmail} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md border-0">
+                      <Zap className="w-4 h-4 mr-2" /> Generate Magic Draft
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">Uses AI to match your resume achievements to the job description.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-gray-300">Draft Content</h4>
+                    <textarea
+                      className="w-full h-48 p-4 bg-black/40 border border-white/10 rounded-lg text-sm font-mono leading-relaxed outline-none focus:ring-2 focus:ring-blue-500/50 resize-none text-gray-300"
+                      value={generatedEmail}
+                      onChange={(e) => setGeneratedEmail(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-gray-300 border-white/10" onClick={() => setGeneratedEmail("")}>Regenerate</Button>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => copyToClipboard(generatedEmail)}>
+                        <Copy className="w-4 h-4 mr-2" /> Copy to Clipboard
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       {/* Interview Prep Modal */}
-      {prepModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-gray-900 rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 border border-white/10">
-            <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-black/20">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <Mic className="w-5 h-5 text-purple-500" />
-                Interview Coach
-              </h3>
-              <button onClick={() => setPrepModalOpen(false)} className="text-gray-400 hover:text-white"><ChevronDown className="w-6 h-6 rotate-180" /></button>
-            </div>
+      {
+        prepModalOpen && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-gray-900 rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 border border-white/10">
+              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-black/20">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <Mic className="w-5 h-5 text-purple-500" />
+                  Interview Coach
+                </h3>
+                <button onClick={() => setPrepModalOpen(false)} className="text-gray-400 hover:text-white"><ChevronDown className="w-6 h-6 rotate-180" /></button>
+              </div>
 
-            <div className="flex-1 overflow-y-auto p-8 bg-black/20 custom-scrollbar">
-              {!prepData ? (
-                <div className="text-center py-12">
-                  <h4 className="text-lg font-semibold text-gray-200 mb-2">Ready to practice?</h4>
-                  <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">I will analyze the job description and your resume to generate likely technical questions and behavioral stories.</p>
-                  <Button onClick={handleGeneratePrep} loading={generatingPrep} className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg mx-auto border-0">
-                    <Mic className="w-4 h-4 mr-2" /> Generate Interview Guide
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Technical Section */}
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Zap className="w-4 h-4" /> Technical Questions
-                    </h4>
-                    <div className="grid gap-4">
-                      {prepData.technical_questions?.map((q, idx) => (
-                        <div key={idx} className="bg-white/5 p-5 rounded-lg border border-white/10 shadow-sm">
-                          <p className="font-semibold text-gray-200 mb-3">Q: {q.question}</p>
-                          <div className="text-sm text-gray-400 bg-purple-500/10 p-3 rounded border border-purple-500/20 italic">
-                            💡 Tip: {q.answer_tips}
+              <div className="flex-1 overflow-y-auto p-8 bg-black/20 custom-scrollbar">
+                {!prepData ? (
+                  <div className="text-center py-12">
+                    <h4 className="text-lg font-semibold text-gray-200 mb-2">Ready to practice?</h4>
+                    <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">I will analyze the job description and your resume to generate likely technical questions and behavioral stories.</p>
+                    <Button onClick={handleGeneratePrep} loading={generatingPrep} className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg mx-auto border-0">
+                      <Mic className="w-4 h-4 mr-2" /> Generate Interview Guide
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Technical Section */}
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Zap className="w-4 h-4" /> Technical Questions
+                      </h4>
+                      <div className="grid gap-4">
+                        {prepData.technical_questions?.map((q, idx) => (
+                          <div key={idx} className="bg-white/5 p-5 rounded-lg border border-white/10 shadow-sm">
+                            <p className="font-semibold text-gray-200 mb-3">Q: {q.question}</p>
+                            <div className="text-sm text-gray-400 bg-purple-500/10 p-3 rounded border border-purple-500/20 italic">
+                              💡 Tip: {q.answer_tips}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Behavioral Section */}
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Briefcase className="w-4 h-4" /> Behavioral / STAR
+                      </h4>
+                      <div className="grid gap-4">
+                        {prepData.behavioral_questions?.map((q, idx) => (
+                          <div key={idx} className="bg-white/5 p-5 rounded-lg border border-white/10 shadow-sm">
+                            <p className="font-semibold text-gray-200 mb-3">Q: {q.question}</p>
+                            <div className="text-sm text-gray-400 bg-blue-500/10 p-3 rounded border border-blue-500/20">
+                              📖 <strong>Your Story:</strong> {q.suggested_story}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-
-                  {/* Behavioral Section */}
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Briefcase className="w-4 h-4" /> Behavioral / STAR
-                    </h4>
-                    <div className="grid gap-4">
-                      {prepData.behavioral_questions?.map((q, idx) => (
-                        <div key={idx} className="bg-white/5 p-5 rounded-lg border border-white/10 shadow-sm">
-                          <p className="font-semibold text-gray-200 mb-3">Q: {q.question}</p>
-                          <div className="text-sm text-gray-400 bg-blue-500/10 p-3 rounded border border-blue-500/20">
-                            📖 <strong>Your Story:</strong> {q.suggested_story}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+    </div >
   );
 }
 
